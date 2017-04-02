@@ -292,7 +292,7 @@
   "Syntax table in use in ruby-mode buffers.")
 
 (unless feature-mode-syntax-table
-  (setq feature-mode-syntax-table (make-syntax-table)))
+  (setq feature-mode-syntax-table (make-syntax-table text-mode-syntax-table)))
 
 ;; Constants
 
