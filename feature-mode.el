@@ -259,8 +259,26 @@
     (examples   . font-lock-keyword-face)
     ("<[^>]*>"  . font-lock-variable-name-face)
     ("^ *@.*"   . font-lock-preprocessor-face)
-    ("^ *#.*"     0 font-lock-comment-face t)))
+    ("^ *#.*"     0 font-lock-comment-face t)
+    ;; FIXME What is the correct behaviour when a docstring contains """ ?
+    ("^ *\"\"\"\\(\n\\|.\\)*\"\"\"" . font-lock-string-face)))
 
+(defun feature-mode-font-lock-scenario-extender ()
+  "Extend fontification region so it always encompasses whole scenarios."
+  (eval-when-compile (defvar font-lock-beg) (defvar font-lock-end))
+  (save-excursion
+    (let* ((scenario-start-regexp "^[ \t]*\\(Scenario:\\|Scenario Outline:\\|Background:\\)")
+           (beg (or (progn (goto-char (- font-lock-beg 1))
+                           (re-search-backward scenario-start-regexp nil t))
+                    (point-min)))
+           (end (if (progn (goto-char (+ font-lock-end 1))
+                           (re-search-forward scenario-start-regexp nil t))
+                    (match-beginning 0)
+                  (point-max))))
+      (setq font-lock-beg beg
+            font-lock-end end)
+      (message "Found feature from %S to %S" beg end)
+      t)))
 
 ;;
 ;; Keymap
@@ -289,7 +307,7 @@
 ;;
 
 (defvar feature-mode-syntax-table nil
-  "Syntax table in use in ruby-mode buffers.")
+  "Syntax table in use in feature-mode buffers.")
 
 (unless feature-mode-syntax-table
   (setq feature-mode-syntax-table (make-syntax-table text-mode-syntax-table)))
@@ -590,6 +608,7 @@ back-dent the line by `feature-indent-offset' spaces.  On reaching column
   (setq major-mode 'feature-mode)
   (feature-mode-variables)
   (feature-minor-modes)
+  (add-hook 'font-lock-extend-region-functions 'feature-mode-font-lock-scenario-extender)
   (run-mode-hooks 'feature-mode-hook))
 
 ;;;###autoload
