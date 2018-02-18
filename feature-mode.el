@@ -261,13 +261,15 @@
     ("^ *@.*"   . font-lock-preprocessor-face)
     ("^ *#.*"     0 font-lock-comment-face t)
     ;; FIXME What is the correct behaviour when a docstring contains """ ?
-    ("^ *\"\"\"\\(\n\\|.\\)*\"\"\"" . font-lock-string-face)))
+    ;; (,(concat (string-join '(given when then but and) "\\|")
+    ;;          "^ *\"\"\"\\(\n\\|.\\)*\"\"\"") . font-lock-string-face)
+    ))
 
 (defun feature-mode-font-lock-scenario-extender ()
   "Extend fontification region so it always encompasses whole scenarios."
   (eval-when-compile (defvar font-lock-beg) (defvar font-lock-end))
   (save-excursion
-    (let* ((scenario-start-regexp "^[ \t]*\\(Scenario:\\|Scenario Outline:\\|Background:\\)")
+    (let* ((scenario-start-regexp (string-join '(scenario scenario_outline background) "\\|"))
            (beg (or (progn (goto-char (- font-lock-beg 1))
                            (re-search-backward scenario-start-regexp nil t))
                     (point-min)))
@@ -549,17 +551,19 @@ back-dent the line by `feature-indent-offset' spaces.  On reaching column
 (ad-activate 'orgtbl-tab)
 
 (defun feature-font-lock-keywords-for (language)
-  (let ((result-keywords . ()))
-    (dolist (pair feature-font-lock-keywords)
-      (let* ((keyword (car pair))
-             (font-locking (cdr pair))
-             (language-keyword (cdr (assoc keyword
-                                           (cdr (assoc
-                                                 language
-                                                 feature-keywords-per-language))))))
+  ;; (let ((result-keywords . ()))
+  ;;   (dolist (pair feature-font-lock-keywords)
+  ;;     (let* ((keyword (car pair))
+  ;;            (font-locking (cdr pair))
+  ;;            (language-keyword (cdr (assoc keyword
+  ;;                                          (cdr (assoc
+  ;;                                                language
+  ;;                                                feature-keywords-per-language))))))
 
-        (push (cons (or language-keyword keyword) font-locking) result-keywords)))
-    result-keywords))
+  ;;       (push (cons (or language-keyword keyword) font-locking) result-keywords)))
+  ;;   result-keywords)
+  
+  )
 
 (defun feature-detect-language ()
   (save-excursion
@@ -581,9 +585,9 @@ back-dent the line by `feature-indent-offset' spaces.  On reaching column
   (set (make-local-variable 'indent-tabs-mode) 'nil)
   (set (make-local-variable 'indent-line-function) 'feature-indent-line)
   (set (make-local-variable 'font-lock-defaults)
-       (list (feature-font-lock-keywords-for (feature-detect-language)) nil nil))
-  (set (make-local-variable 'font-lock-keywords)
-       (feature-font-lock-keywords-for (feature-detect-language)))
+       (list (feature-font-lock-keywords-for (feature-detect-language))
+             t
+             nil))
   (set (make-local-variable 'imenu-generic-expression)
         `(("Scenario:" ,(feature-scenario-name-re (feature-detect-language)) 3)
           ("Background:" ,(feature-background-re (feature-detect-language)) 1))))
@@ -608,7 +612,7 @@ back-dent the line by `feature-indent-offset' spaces.  On reaching column
   (setq major-mode 'feature-mode)
   (feature-mode-variables)
   (feature-minor-modes)
-  (add-hook 'font-lock-extend-region-functions 'feature-mode-font-lock-scenario-extender)
+  ;; (add-hook 'font-lock-extend-region-functions 'feature-mode-font-lock-scenario-extender)
   (run-mode-hooks 'feature-mode-hook))
 
 ;;;###autoload
